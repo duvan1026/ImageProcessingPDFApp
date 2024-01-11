@@ -181,8 +181,7 @@ namespace PDFCreatorUI.Process
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error en ProcessTiffImagesForPdfAssembly : {ex.Message}");
-                throw;
+                throw new ArgumentException($"Error en ProcessTiffImagesForPdfAssembly : {ex.Message}");
             }
         }
 
@@ -289,8 +288,7 @@ namespace PDFCreatorUI.Process
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error en AssemblePdfFromTiffPagesInFolder Procesando el documento PDF: {ex.Message}");
-                throw;
+                throw new ArgumentException($"Error en AssemblePdfFromTiffPagesInFolder Procesando el documento PDF: {ex.Message}");
             }
         }
 
@@ -318,8 +316,7 @@ namespace PDFCreatorUI.Process
             }
             catch (Exception ex) 
             {
-                Console.WriteLine($"Error en SavePdfDocument : {ex.Message}");
-                throw;
+                throw new ArgumentException($"Error en SavePdfDocument '{outputPath}': {ex.Message}");
             }
         }
 

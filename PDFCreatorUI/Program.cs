@@ -23,7 +23,6 @@ namespace PDFCreatorUI
         private static string boxFolderName = null;             // Nombre de la carpeta principal (Caja)
 
 
-
         [STAThread]
         static void Main()
         {
@@ -79,24 +78,6 @@ namespace PDFCreatorUI
             }
         }
 
-        private static bool FormProgresoEstaAbierto()
-        {
-            // Verificar si la instancia del formulario existe y si está visible
-            FormProgress formProgreso = Application.OpenForms["progressForm"] as FormProgress;
-            return (formProgreso != null && !formProgreso.IsDisposed && formProgreso.Visible);
-        }
-
-        private static void ReportProgress(ProgressData progressData, FormProgress progressForm)
-        {
-
-            progressForm.SetProceso("Proceso de Imagenes");
-            progressForm.SetMaxValue(progressData.MaxProgressBar1);
-            progressForm.SetMaxValue2(progressData.MaxProgressBar2);
-            progressForm.SetAccion($"Directorio {progressData.CurrentProgressBar1} de {progressData.MaxProgressBar1}");
-            progressForm.SetAccion2($"Expediente {progressData.CurrentProgressBar2} de {progressData.MaxProgressBar2}");
-            progressForm.SetProgreso(progressData.CurrentProgressBar1);
-            progressForm.SetProgreso2(progressData.CurrentProgressBar2);
-        }
 
         static void ProcesarImagenes(IProgress<ProgressData> progress, FormCarguePaquete formCarguePaquete, FormProgress progressForm)
         {
@@ -263,6 +244,27 @@ namespace PDFCreatorUI
             }
         }
 
+        /// <summary>
+        /// Informa sobre el progreso del proceso mediante la actualización de un formulario de progreso.
+        /// </summary>
+        /// <param name="progressData">Datos de progreso que contienen información actualizada.</param>
+        /// <param name="progressForm">Instancia del formulario de progreso a actualizar.</param>
+        private static void ReportProgress(ProgressData progressData, FormProgress progressForm)
+        {
+            progressForm.SetProceso("Proceso de Imagenes");
+            progressForm.SetMaxValue(progressData.MaxProgressBar1);
+            progressForm.SetMaxValue2(progressData.MaxProgressBar2);
+            progressForm.SetAccion($"Directorio {progressData.CurrentProgressBar1} de {progressData.MaxProgressBar1}");
+            progressForm.SetAccion2($"Expediente {progressData.CurrentProgressBar2} de {progressData.MaxProgressBar2}");
+            progressForm.SetProgreso(progressData.CurrentProgressBar1);
+            progressForm.SetProgreso2(progressData.CurrentProgressBar2);
+        }
+
+        /// <summary>
+        /// Verifica si el usuario desea cancelar el proceso y toma acciones en consecuencia.
+        /// </summary>
+        /// <param name="progressForm">Instancia del formulario de progreso asociado al proceso.</param>
+        /// <exception cref="Exception">Se lanza si el usuario elige cancelar el proceso.</exception>
         public static void CheckForCancellation(FormProgress progressForm)
         {
             DialogResult result = MessageBox.Show("¿Desea cancelar el proceso?", "Advertencia", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
@@ -280,17 +282,13 @@ namespace PDFCreatorUI
         }
 
         /// <summary>
-        /// Muestra un cuadro de diálogo de confirmación para determinar si el usuario desea cancelar un proceso.
+        /// Crea y devuelve un objeto ProgressData con la información de progreso proporcionada.
         /// </summary>
-        /// <returns>
-        /// <c>true</c> si el usuario elige cancelar el proceso; de lo contrario, <c>false</c>.
-        /// </returns>
-        private static bool ConfirmCancellation()
-        {
-            DialogResult result = MessageBox.Show("¿Realmente desea cancelar el proceso?", "Confirmar Cancelación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            return result == DialogResult.Yes;
-        }
-
+        /// <param name="currentProgress1">Progreso actual para la barra 1.</param>
+        /// <param name="maxProgress1">Valor máximo para la barra 1.</param>
+        /// <param name="currentProgress2">Progreso actual para la barra 2.</param>
+        /// <param name="maxProgress2">Valor máximo para la barra 2.</param>
+        /// <returns>Objeto ProgressData con la información de progreso proporcionada.</returns>
         private static ProgressData CreateProgressData(int currentProgress1, int maxProgress1, int currentProgress2, int maxProgress2)
         {
             return new ProgressData
@@ -302,48 +300,68 @@ namespace PDFCreatorUI
             };
         }
 
+        /// <summary>
+        /// Cambia el nombre de una carpeta de la ruta antigua a la nueva.
+        /// </summary>
+        /// <param name="oldFolderPath">Ruta de la carpeta existente.</param>
+        /// <param name="newFolderPath">Nueva ruta y nombre para la carpeta.</param>
+        /// <exception cref="ArgumentException">
+        /// Se produce cuando la carpeta está siendo utilizada por otro proceso.
+        /// </exception>
+        /// <exception cref="UnauthorizedAccessException">
+        /// Se produce cuando hay un intento no autorizado de cambiar el nombre de la carpeta.
+        /// </exception>
+        /// <exception cref="Exception">
+        /// Se produce en caso de un error general al cambiar el nombre de la carpeta.
+        /// </exception>
         static void ChangeFolderName(string oldFolderPath, string newFolderPath)
         {
             try
-            {
-                // Cambiar el nombre de la carpeta
-                System.IO.Directory.Move(oldFolderPath, newFolderPath);
+            {                
+                System.IO.Directory.Move(oldFolderPath, newFolderPath);   // Cambiar el nombre de la carpeta
             }
             catch (System.IO.IOException ex)
-            {
-                // Verificar si la excepción es debido a que la carpeta está en uso por otro proceso
-                if (IsFolderInUse(ex))
+            {                
+                if (IsFolderInUse(ex))                                    // Verificar si la excepción es debido a que la carpeta está en uso por otro proceso
                 {
-                    Console.WriteLine("La carpeta está siendo utilizada por otro proceso.");
+                    throw new ArgumentException($"La carpeta '{oldFolderPath}' está siendo utilizada por otro proceso.");
                 }
                 else
                 {
-                    Console.WriteLine($"Error al cambiar el nombre de la carpeta: {ex.Message}");
+                    throw new Exception($"Error al cambiar el nombre de la carpeta '{oldFolderPath}': {ex.Message}");
                 }
             }
             catch (UnauthorizedAccessException ex)
             {
-                Console.WriteLine($"Error de acceso no autorizado al cambiar el nombre de la carpeta: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al cambiar el nombre de la carpeta: {ex.Message}");
+                throw new ArgumentException($"Error de acceso no autorizado al cambiar el nombre de la carpeta '{oldFolderPath}': {ex.Message}");
             }
         }
 
+
+
+        /// <summary>
+        /// Comprueba si una carpeta está siendo utilizada por otro proceso, según la excepción de E/S proporcionada.
+        /// </summary>
+        /// <param name="ex">Excepción de E/S relacionada con la operación en la carpeta.</param>
+        /// <returns>
+        /// true si la carpeta está siendo utilizada por otro proceso; false en caso contrario.
+        /// </returns>
         static bool IsFolderInUse(System.IO.IOException ex)
         {
             int errorCode = System.Runtime.InteropServices.Marshal.GetHRForException(ex) & ((1 << 16) - 1);
             return errorCode == 32 || errorCode == 33; // 32: El proceso no puede obtener acceso al archivo porque está siendo utilizado por otro proceso, 33: El proceso no puede obtener acceso al archivo porque otro proceso tiene bloqueado una porción del archivo.
         }
 
+        /// <summary>
+        /// Maneja el evento Tick del temporizador, deteniendo el temporizador y cerrando el formulario splash.
+        /// </summary>
+        /// <param name="sender">Objeto que generó el evento.</param>
+        /// <param name="e">Argumentos del evento.</param>
         private static void Timer_Tick(object sender, EventArgs e)
-        {
-            // Detiene el temporizador
-            timer.Stop();
-
-            // Cierra el formulario splash
-            if (splashForm != null)
+        {            
+            timer.Stop();               // Detiene el temporizador
+            
+            if (splashForm != null)     // Cierra el formulario splash
             {
                 splashForm.Close();
                 splashForm.Dispose();
