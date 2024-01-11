@@ -20,8 +20,6 @@ namespace PDFCreatorUI
         const string filterSuffix = ".#";
 
         private static string nameFolderDestination = null;     // Nombre carpeta de destino
-        private static string boxFolderName = null;             // Nombre de la carpeta principal (Caja)
-
 
         [STAThread]
         static void Main()
@@ -91,7 +89,7 @@ namespace PDFCreatorUI
                 imageFileProcess.ImageProcessState = formCarguePaquete.checkProcessImageState;
                 imageFileProcess.LoteProcessState = formCarguePaquete.checkProcessLoteState;
                
-                boxFolderName = Path.GetFileName(inputFile);                             // Nombre Carpeta de Caja
+                imageFileProcess.BoxFolderName = Path.GetFileName(inputFile);                             // Nombre Carpeta de Caja
                 nameFolderDestination = Path.GetFileName(outputFile);
 
                 // TODO: Ordenar los directorios por nombre
@@ -107,8 +105,11 @@ namespace PDFCreatorUI
                     int progressLevel = 0;
 
                     // Crear el directorio de destino para el archivo de salida
-                    string outputFileDestination = Path.Combine(outputFile, boxFolderName);
+                    string outputFileDestination = Path.Combine(outputFile, imageFileProcess.BoxFolderName);
                     imageFileProcess.CreateDirectoryWithWriteAccess(outputFileDestination);
+
+                    string outputInformationPath = imageFileProcess.GetTXTOutputPath(outputFileDestination);
+
 
                     // Filtrar y recorrer los Book solo que cumplen con las condiciónes
                     DirectoryInfo inputBoxDirectory = new DirectoryInfo(inputFile);
@@ -118,6 +119,7 @@ namespace PDFCreatorUI
 
                         imageFileProcess.BookFolderName = Path.GetFileName(currentBookFolder.FullName);       // Nombre del libro
                         string bookFolderPath = Path.Combine(inputFile, imageFileProcess.BookFolderName);
+                        imageFileProcess.WriteInitialProcessBanner(outputInformationPath);                    
 
                         int expedienteProgressLevel = 0;
 
@@ -151,7 +153,6 @@ namespace PDFCreatorUI
 
                                 if ( tiffFiles.Length != 0)
                                 {
-                                    string outputInformationPath = imageFileProcess.GetTXTOutputPath(outputFileDestination);
                                     imageFileProcess.PageNumberMaxTiff = tiffFiles.Length;
                                     imageFileProcess.CurrentPageTiff = 0;
 
@@ -224,13 +225,14 @@ namespace PDFCreatorUI
 
                     }
 
-                    MessageBox.Show($"Proceso completado. Todas las imágenes han sido procesadas del directorio '{boxFolderName}'.", "Proceso Completo", 
+                    imageFileProcess.WriteFinalizationProcessBanner(outputInformationPath);
+                    MessageBox.Show($"Proceso completado. Todas las imágenes han sido procesadas del directorio '{imageFileProcess.BoxFolderName}'.", "Proceso Completo", 
                                     MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 }
                 else
                 {
-                    MessageBox.Show($"ADVERTENCIA: No se encontraron libros en el directorio '{boxFolderName}' para el procesamiento de imágenes. " +
+                    MessageBox.Show($"ADVERTENCIA: No se encontraron libros en el directorio '{imageFileProcess.BoxFolderName}' para el procesamiento de imágenes. " +
                                     $"Por favor, verifique la ruta de entrada. El proceso continuará, pero los resultados pueden no ser precisos.",
                                     "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }

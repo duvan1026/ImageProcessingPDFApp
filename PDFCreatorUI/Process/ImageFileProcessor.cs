@@ -18,6 +18,7 @@ namespace PDFCreatorUI.Process
         const string outputFormat = ".pdf";
         const string delimiter = "-";
 
+        private string boxFolderName = null;            // Nombre de la carpeta primaria (Caja)
         private string bookFolderName = null;            // Nombre de la carpeta secundaria (Libro)
         private string expedienteFolderName = null;      // Nombre de la carpeta expediente (Expediente)
         private string imageFolderName = null;           // Nombre de la carpeta Imagen (Image)
@@ -27,6 +28,11 @@ namespace PDFCreatorUI.Process
         private int currentPageTiff;                    // Pagina actual de acuerdo al numero de Imagenes del expediente
         private int pageNumberMaxTiff;                  // Numero de paginas totales que contiene el expediente
 
+        public string BoxFolderName
+        {
+            get { return boxFolderName; }
+            set { boxFolderName = value; }
+        }
 
         public string BookFolderName
         {
@@ -185,6 +191,44 @@ namespace PDFCreatorUI.Process
             }
         }
 
+        public void WriteInitialProcessBanner( string outputInformationPath)
+        {
+            try
+            {
+                DateTime fechaLog = DateTime.Now;                                   // Obtener la fecha actual
+
+                using (StreamWriter sw = File.AppendText(outputInformationPath))
+                {
+                    sw.WriteLine("--------------------------------------------------------------");
+                    sw.WriteLine($"----- Inicio Proceso : {boxFolderName} - {fechaLog} -----");
+                    sw.WriteLine("--------------------------------------------------------------");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"Error al escribir en el archivo '{outputInformationPath}': {ex.Message}");
+            }
+        }
+
+        public void WriteFinalizationProcessBanner(string outputInformationPath)
+        {
+            try
+            {
+                DateTime fechaLog = DateTime.Now; // Obtener la fecha actual
+
+                using (StreamWriter sw = new StreamWriter(outputInformationPath, true))
+                {
+                    sw.WriteLine("--------------------------------------------------------------");
+                    sw.WriteLine($"----- Fin Proceso : {boxFolderName} - {fechaLog} -----");
+                    sw.WriteLine("----******************************************************----");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"Error al escribir en el archivo '{outputInformationPath}': {ex.Message}");
+            }
+        }
+
         /// <summary>
         /// Escribe información en un archivo de texto.
         /// </summary>
@@ -198,7 +242,7 @@ namespace PDFCreatorUI.Process
 
             using (StreamWriter sw = File.AppendText(outputInformationPath))
             {
-                sw.WriteLine($"{imageName}\t{fechaLog}\t{tamañoFormateado}");
+                sw.WriteLine($"* {imageName}\t{fechaLog}\t{tamañoFormateado}");
             }
         }
 
@@ -215,7 +259,7 @@ namespace PDFCreatorUI.Process
 
             using (StreamWriter sw = File.AppendText(outputInformationPath))
             {
-                sw.WriteLine($"{imageName}\t{fechaLog}\t-------ERROR :\t{ex}\t{inputFilePath}");
+                sw.WriteLine($"* {imageName}\t{fechaLog}\t-------ERROR :\t{ex}\t{inputFilePath}");
             }
         }
 
