@@ -88,64 +88,6 @@ namespace PDFCreatorUI.Process
 
         #region Metodos
 
-        /*
-        /// <summary>
-        /// Procesa archivos TIFF en un directorio de entrada y los convierte en un documento PDF de destino.
-        /// </summary>
-        /// <param name="directoryInput">El directorio de entrada que contiene archivos TIFF a procesar.</param>
-        /// <param name="destinationRoute">El directorio de destino donde se almacenará el documento PDF resultante.</param>
-        public async Task ProcessTiffFiles(string directoryInput, string destinationRoute)
-        {
-            // Obtener archivos TIFF en el directorio actual
-            string[] tiffFiles = GetTiffFilesInDirectory(directoryInput)
-                        .OrderBy(fileName => fileName)
-                        .ToArray();
-
-            if (tiffFiles == null || tiffFiles.Length == 0) return;
-
-            string outputInformationPath = GetTXTOutputPath(destinationRoute);
-
-            using (PdfDocument outputDocument = CreatePdfDocument())
-            {
-
-                foreach (string tiffFile in tiffFiles)
-                {
-                    if (imageProcessState )
-                    {
-                        await Task.Run(() =>
-                        {
-                            imageFolderName = Path.GetFileNameWithoutExtension(tiffFile);  // Nombre Carpeta de Caja
-                            string outputPath = GetPdfOutputPath(destinationRoute);
-                            PDFService.ConvertTiffToPdf(tiffFile, outputPath);
-                            WriteInformationToFile(outputPath, outputInformationPath);
-
-                            if (loteProcessState)
-                            {
-                                AddPagesFromTiffToPdf(outputPath, outputDocument);
-                            }
-                        });
-                    }
-                    else if (loteProcessState)
-                    {
-                        await Task.Run(() =>
-                        {
-                            string tempFolderPath = Path.GetTempPath();
-                            string tempPath = GetPdfOutputPath(tempFolderPath);
-                            PDFService.ConvertTiffToPdf(tiffFile, tempPath);
-                            AddPagesFromTiffToPdf(tempPath, outputDocument);
-                            File.Delete(tempPath);
-                        });
-                    }
-                }
-                if (loteProcessState)
-                {
-                    string outputnamePDFTotal = GetOutputPdfName(destinationRoute);
-                    SavePdfDocument(outputDocument, outputnamePDFTotal);
-                    WriteInformationToFile(outputnamePDFTotal, outputInformationPath);
-                }
-            }
-        }*/
-
         /// <summary>
         /// Procesa imágenes TIFF para ensamblar un documento PDF.
         /// </summary>
@@ -195,7 +137,7 @@ namespace PDFCreatorUI.Process
                         File.Delete(outputPath);
                     }
 
-                    WriteInformationToFileError("ex.Message", tiffFile, outputInformationPath);
+                    WriteInformationToFileError(ex.Message, tiffFile, outputInformationPath);
                 }
             }
             catch (Exception ex)
@@ -204,6 +146,14 @@ namespace PDFCreatorUI.Process
             }
         }
 
+        /// <summary>
+        /// Escribe el encabezado inicial del proceso en el archivo de información de salida especificado.
+        /// </summary>
+        /// <param name="outputInformationPath">Ruta del archivo de información de salida.</param>
+        /// <remarks>
+        /// Este método agrega un encabezado con marca de tiempo que indica el inicio del proceso al archivo de información de salida.
+        /// </remarks>
+        /// <exception cref="ArgumentException">Se lanza si se produce un error al escribir en el archivo.</exception>
         public void WriteInitialProcessBanner( string outputInformationPath)
         {
             try
@@ -223,6 +173,14 @@ namespace PDFCreatorUI.Process
             }
         }
 
+        /// <summary>
+        /// Escribe el encabezado de finalización del proceso en el archivo de información de salida especificado.
+        /// </summary>
+        /// <param name="outputInformationPath">Ruta del archivo de información de salida.</param>
+        /// <remarks>
+        /// Este método agrega un encabezado con marca de tiempo que indica el fin del proceso al archivo de información de salida.
+        /// </remarks>
+        /// <exception cref="ArgumentException">Se lanza si se produce un error al escribir en el archivo.</exception>
         public void WriteFinalizationProcessBanner(string outputInformationPath)
         {
             try
