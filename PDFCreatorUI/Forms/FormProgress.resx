@@ -117,20 +117,20 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="Aceptar" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Images\Aceptar.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="cancel" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Images\cancel.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ConvertImageLogo" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Images\ConvertImageLogo.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="folder_image" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Images\folder_image.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="LogoPYC" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\LogoPYC.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="btnCancelar.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
+        JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAB5UlEQVQ4T6WSW0sbQRiG91YUFC1aKlLp
+        0bRKQhJpjNFCYtmYhNamB4NWSm1LD//TCw/g3yhmQ0nCZnezO/N0ZmPS3aY3pRcvwwzzvN+83zcG8F8a
+        PzQMKzy+lojL+vN+bKO2TR4/gG/v4Osh8ssB8nMD+fEt8sNrgod38A2jE2XG4e9HYJaQ2SwynUakUoi1
+        NYJCjuDoBf37t3H03ZhBFD5swOUlsl5HJJOI1VWCahV5cYFfK+Pv7+LdXcK+NhkaDJ6sKmuYbhdaLYJa
+        jaBSAUtF73SQZ2f0k4/ovyzSDdGIQZg3k0Hs7YXw0CSUhpVJf3sbd2EB7/lT2lED3WH5af93XvXkIRhK
+        wd7WFu78PM7cHG618BeD4zeDvIkEQbkcM9DVvXweZ3aW3vQ0bjk3biDe1wlWVghMc5RZrxqm3UZeXeGo
+        ydiTk7jP1vkZNVCzRagR+U/SyPPzQdVmE29zE3djI4SlMhEnJ/SWbuKUMnEDT/0wPV+/UcE3i4jT0xDW
+        eXszMzi6uQp21lM4O1k6izdoGcaPkYGW+hyWnm//1Q5e4t4orz01hT0xgb2oGqgqtyNwzEBLfQ7LXr6F
+        Vyvg7uZxzVyY1yllcYrpMVgrZqClumvpDg+ls2opUEuNJn4/tvl3YfwC55W4g7G9NzUAAAAASUVORK5C
+        YII=
+</value>
   </data>
 </root>

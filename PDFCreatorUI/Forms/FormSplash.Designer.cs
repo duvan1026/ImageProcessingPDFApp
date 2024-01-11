@@ -1,6 +1,6 @@
 ﻿namespace PDFCreatorUI
 {
-    partial class Form1
+    partial class FormSplash
     {
         /// <summary>
         /// Variable del diseñador necesaria.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormSplash));
             this.lblTitulo = new System.Windows.Forms.Label();
             this.lblDesarrollado = new System.Windows.Forms.Label();
             this.lblMiharu = new System.Windows.Forms.Label();

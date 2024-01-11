@@ -4,12 +4,12 @@ using System.Runtime.InteropServices;
 
 // La información general de un ensamblado se controla mediante el siguiente 
 // conjunto de atributos. Cambie estos valores de atributo para modificar la información
-// asociada a un ensamblado.
-[assembly: AssemblyTitle("ImageProcessingPDFApp")]
+// asociada con un ensamblado.
+[assembly: AssemblyTitle("TesseractOCR.Library")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ImageProcessingPDFApp")]
+[assembly: AssemblyProduct("TesseractOCR.Library")]
 [assembly: AssemblyCopyright("Copyright ©  2023")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // El siguiente GUID sirve como id. de typelib si este proyecto se expone a COM.
-[assembly: Guid("88ecac0a-ccf7-4c47-bc29-4aeeb45c4562")]
+[assembly: Guid("2aff9839-f331-43c2-9c85-a7d7faf4ed38")]
 
 // La información de versión de un ensamblado consta de los cuatro valores siguientes:
 //

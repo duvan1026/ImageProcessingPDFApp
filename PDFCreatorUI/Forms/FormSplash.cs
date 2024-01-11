@@ -10,9 +10,9 @@ using System.Windows.Forms;
 
 namespace PDFCreatorUI
 {
-    public partial class Form1 : Form
+    public partial class FormSplash : Form
     {
-        public Form1()
+        public FormSplash()
         {
             InitializeComponent();
         }
