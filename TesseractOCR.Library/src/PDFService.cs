@@ -40,7 +40,7 @@ namespace TesseractOCR.Library.src
 
 
         /// <summary>
-        /// Convierte una imagen TIFF al formato PDF, aplicando reconocimiento óptico de caracteres (OCR) mediante Tesseract.
+        /// Convierte una imagen TIFF al formato PDF de texto, aplicando reconocimiento óptico de caracteres (OCR) mediante Tesseract.
         /// </summary>
         /// <param name="tiffImagePath">Ruta de la imagen TIFF de entrada.</param>
         /// <param name="pdfOutputPath">Ruta de salida del archivo PDF generado.</param>
@@ -49,7 +49,7 @@ namespace TesseractOCR.Library.src
         /// con la imagen procesada y el texto extraído. Se recomienda proporcionar rutas de archivos válidas.
         /// </remarks>
         /// <exception cref="Exception">Se lanza en caso de errores durante el proceso de conversión.</exception>
-        public static void ConvertTiffToPdf(string tiffImagePath, string pdfOutputPath)
+        public static void ConvertTiffToTextPdf(string tiffImagePath, string pdfOutputPath)
         {
             try
             {
@@ -84,6 +84,48 @@ namespace TesseractOCR.Library.src
                             }
                         }
                     }
+                }
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Agrega una imagen desde un archivo TIFF a un documento PDF, ajustando la orientación y optimizando la salida.
+        /// </summary>
+        /// <param name="tiffImagePath">Ruta del archivo de imagen TIFF que se agregará al PDF.</param>
+        /// <param name="pdfOutputPath">Ruta de salida para el documento PDF generado.</param>
+        /// <remarks>
+        /// El método lee la imagen TIFF, ajusta su orientación y la escala apropiadamente antes de agregarla al PDF.
+        /// El PDF resultante se guarda en la ruta de salida especificada.
+        /// </remarks>
+        /// <exception cref="Exception">Lanzada en caso de cualquier error durante el proceso.</exception>
+        public static void ConvertTiffToPdf(string tiffImagePath, string pdfOutputPath)
+        {
+            try
+            {
+                using (var image = new System.Drawing.Bitmap(tiffImagePath))
+                {
+                    AdjustOrientation(image);
+
+                    double scaleWidth, scaleHeight;
+
+                    var imageSize = new XSize(ConvertToPoints(image.Width, dpi),
+                                              ConvertToPoints(image.Height, dpi));
+
+                    using (var document = CreateCustomPdfDoc(imageSize))
+                    {
+                        using (var gfx = CreateGraphics(document))
+                        {
+                            scaleWidth = CalculateScale(imageSize.Width, image.Width);
+                            scaleHeight = CalculateScale(imageSize.Height, image.Height);
+
+                            AddImageToPdf(gfx, tiffImagePath, imageSize);
+                            SavePdfDocument(document, pdfOutputPath);
+                        }
+                    }                    
                 }
             }
             catch

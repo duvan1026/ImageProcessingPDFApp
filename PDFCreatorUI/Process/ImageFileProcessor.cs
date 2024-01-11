@@ -157,12 +157,47 @@ namespace PDFCreatorUI.Process
         {
             try
             {
-                this.imageFolderName = Path.GetFileNameWithoutExtension(tiffFile);     // Nombre Carpeta de Caja
-
+                imageFolderName = Path.GetFileNameWithoutExtension(tiffFile);     // Nombre Carpeta de Caja
                 string outputPath = GetPdfOutputPath(destinationRoute);
 
                 try
                 {
+                    // Crea un PDF si el sistema de OCR no puede reconocer caracteres de la imagen
+                    PDFService.ConvertTiffToPdf(tiffFile, outputPath);
+
+                    if (LoteProcessState)
+                    {
+                        string outputnamePDFTotal = GetOutputPdfName(destinationRoute);
+                        AssemblePdfFromTiffPagesInFolder(outputDocument, outputPath, outputnamePDFTotal);
+                    }
+
+                    if (!IsImageProcessing)
+                    {
+                        File.Delete(outputPath);
+                    }
+
+                    WriteInformationToFileError("ex.Message", tiffFile, outputInformationPath);
+                    /*
+                    PDFService.ConvertTiffToTextPdf(tiffFile, outputPath);
+
+                    if (LoteProcessState)
+                    {
+                        string outputnamePDFTotal = GetOutputPdfName(destinationRoute);
+                        AssemblePdfFromTiffPagesInFolder(outputDocument, outputPath, outputnamePDFTotal);
+                    }
+
+                    if (IsImageProcessing)
+                    {
+                        WriteInformationToFile(outputPath, outputInformationPath);
+                    }
+                    else
+                    {
+                        File.Delete(outputPath);
+                    }*/
+                }
+                catch (Exception ex)
+                {
+                    // Crea un PDF si el sistema de OCR no puede reconocer caracteres de la imagen
                     PDFService.ConvertTiffToPdf(tiffFile, outputPath);
 
                     if (LoteProcessState)
@@ -179,10 +214,8 @@ namespace PDFCreatorUI.Process
                     {
                         File.Delete(outputPath);
                     }
-                }
-                catch (Exception ex)
-                {
-                   WriteInformationToFileError(ex.Message, tiffFile, outputInformationPath);
+
+                    WriteInformationToFileError(ex.Message, tiffFile, outputInformationPath);
                 }
             }
             catch (Exception ex)
@@ -259,7 +292,7 @@ namespace PDFCreatorUI.Process
 
             using (StreamWriter sw = File.AppendText(outputInformationPath))
             {
-                sw.WriteLine($"* {imageName}\t{fechaLog}\t-------ERROR :\t{ex}\t{inputFilePath}");
+                sw.WriteLine($"* {imageName}    {fechaLog}   -------ERROR :{ex}   --- en la ruta:{inputFilePath}");
             }
         }
 
