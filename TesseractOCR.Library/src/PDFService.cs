@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -9,6 +11,11 @@ using PdfSharp.Pdf;
 using PdfSharp.Pdf.IO;
 using Tesseract;
 using TesseractOCR.Library.src.Configuration;
+using static System.Net.Mime.MediaTypeNames;
+using Image = System.Drawing.Image;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 
 namespace TesseractOCR.Library.src
 {
@@ -57,33 +64,36 @@ namespace TesseractOCR.Library.src
 
                 using (var engine = new TesseractEngine(tessdataPath, language, EngineMode.Default))
                 {
-                    //using (var image = Pix.LoadFromFile(tiffImagePath))
-                    using (var image = new System.Drawing.Bitmap(tiffImagePath))
+                    
+                    int realOrientation = GetImageOrientation(tiffImagePath);                     // Obtener la orientación real de la imagen
+
+                    using (Bitmap image = new Bitmap(tiffImagePath))
                     {
-                        AdjustOrientation(image);
+                        Bitmap imageOrientation = RotateBitmap(image, realOrientation);          // Rotacion de imagen si es necesario
 
                         double scaleWidth, scaleHeight;
 
-                        using (var pageProcessor = engine.Process(image))
-                        {                          
+                        using (var pageProcessor = engine.Process(imageOrientation))
+                        {
 
-                            var imageSize = new XSize(ConvertToPoints(image.Width, dpi),
-                                                      ConvertToPoints(image.Height, dpi));
+                            var imageSize = new XSize(ConvertToPoints(imageOrientation.Width, dpi),
+                                                      ConvertToPoints(imageOrientation.Height, dpi));
 
                             using (var document = CreateCustomPdfDoc(imageSize))
                             {
                                 using (var gfx = CreateGraphics(document))
                                 {
-                                    scaleWidth = CalculateScale(imageSize.Width, image.Width);
-                                    scaleHeight = CalculateScale(imageSize.Height, image.Height);
+                                    scaleWidth = CalculateScale(imageSize.Width, imageOrientation.Width);
+                                    scaleHeight = CalculateScale(imageSize.Height, imageOrientation.Height);
 
-                                    AddImageToPdf(gfx, tiffImagePath, imageSize);
-                                    ProcessText(pageProcessor, gfx, scaleWidth, scaleHeight);                                    
+                                    AddImageToPdf(gfx, imageOrientation, imageSize);
+                                    ProcessText(pageProcessor, gfx, scaleWidth, scaleHeight);
                                     SavePdfDocument(document, pdfOutputPath);
                                 }
                             }
                         }
                     }
+                    
                 }
             }
             catch
@@ -91,6 +101,7 @@ namespace TesseractOCR.Library.src
                 throw;
             }
         }
+
 
         /// <summary>
         /// Agrega una imagen desde un archivo TIFF a un documento PDF, ajustando la orientación y optimizando la salida.
@@ -106,23 +117,25 @@ namespace TesseractOCR.Library.src
         {
             try
             {
-                using (var image = new System.Drawing.Bitmap(tiffImagePath))
+                int realOrientation = GetImageOrientation(tiffImagePath);
+
+                using (var image = new Bitmap(tiffImagePath))
                 {
-                    AdjustOrientation(image);
+                    Bitmap imageOrientation = RotateBitmap(image, realOrientation);          // Rotacion de imagen si es necesario
 
                     double scaleWidth, scaleHeight;
 
-                    var imageSize = new XSize(ConvertToPoints(image.Width, dpi),
-                                              ConvertToPoints(image.Height, dpi));
+                    var imageSize = new XSize(ConvertToPoints(imageOrientation.Width, dpi),
+                                              ConvertToPoints(imageOrientation.Height, dpi));
 
                     using (var document = CreateCustomPdfDoc(imageSize))
                     {
                         using (var gfx = CreateGraphics(document))
                         {
-                            scaleWidth = CalculateScale(imageSize.Width, image.Width);
-                            scaleHeight = CalculateScale(imageSize.Height, image.Height);
+                            scaleWidth = CalculateScale(imageSize.Width, imageOrientation.Width);
+                            scaleHeight = CalculateScale(imageSize.Height, imageOrientation.Height);
 
-                            AddImageToPdf(gfx, tiffImagePath, imageSize);
+                            AddImageToPdf(gfx, imageOrientation, imageSize);
                             SavePdfDocument(document, pdfOutputPath);
                         }
                     }                    
@@ -135,36 +148,61 @@ namespace TesseractOCR.Library.src
         }
 
         /// <summary>
-        /// Ajusta la orientación de la imagen según los metadatos EXIF.
+        /// Rotar la imagen según la orientación especificada.
         /// </summary>
-        /// <param name="image">Imagen a la que se le ajustará la orientación.</param>
-        public static void AdjustOrientation(Bitmap image)
+        /// <param name="bitmap">La imagen a rotar.</param>
+        /// <param name="rotation">El valor de rotación (3, 6, 8).</param>
+        /// <returns>Imagen rotada si es necesario; de lo contrario, la imagen original.</returns>
+        static Bitmap RotateBitmap(Bitmap bitmap, int rotation)
+        {
+            switch (rotation)
+            {
+                case 3:
+                    bitmap.RotateFlip(RotateFlipType.Rotate180FlipNone);
+                    break;
+                case 6:
+                    bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                    break;
+                case 8:
+                    bitmap.RotateFlip(RotateFlipType.Rotate270FlipNone);
+                    break;
+                default:
+                    // No es necesario rotar
+                    break;
+            }
+
+            return bitmap;
+        }
+
+        /// <summary>
+        /// Obtener la orientación de la imagen desde los metadatos JPEG.
+        /// </summary>
+        /// <param name="imagePath">La ruta de la imagen.</param>
+        /// <returns>Valor de orientación (0 si no se puede determinar).</returns>
+        static int GetImageOrientation(string imagePath)
         {
             try
             {
-                foreach (var propertyId in image.PropertyIdList)
+                using (FileStream stream = new FileStream(imagePath, FileMode.Open, FileAccess.Read))
                 {
-                    if (propertyId == 0x0112) // 0x0112 es el código para la propiedad de orientación en los metadatos EXIF.
-                    {
-                        var orientationProperty = image.GetPropertyItem(0x0112);
-                        var orientation = BitConverter.ToUInt16(orientationProperty.Value, 0);
+                    BitmapDecoder decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                    BitmapMetadata metadata = (BitmapMetadata)decoder.Frames[0].Metadata;
 
-                        if (orientation == 3) // 3 corresponde a Bottom-up
-                        {
-                            image.RotateFlip(RotateFlipType.Rotate180FlipNone);
-                        }
-                        else if (orientation == 6) // 6 corresponde a Right-top
-                        {
-                            image.RotateFlip(RotateFlipType.Rotate90FlipNone);
-                        }
+                    if (metadata.ContainsQuery("/app1/ifd/{ushort=274}")) // 274 representa la etiqueta de orientación en metadatos JPEG
+                    {
+                        return (ushort)metadata.GetQuery("/app1/ifd/{ushort=274}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al ajustar la orientacion de la iamgen. Clase:PDFServices. Metodo:AdjustOrientation.  Detalles: " + ex.Message, ex);
+                throw new Exception("Error al obtener la orientación de la imagen: " + ex.Message);
             }
+
+            return 0; // Valor predeterminado si no se puede determinar la orientación
         }
+
+
 
         /// <summary>
         /// Convierte un valor de longitud desde una unidad de medida específica a puntos (72 puntos por pulgada) en un contexto de resolución dado.
@@ -257,7 +295,7 @@ namespace TesseractOCR.Library.src
         {
             try
             {
-                using (var memoryStream = new System.IO.MemoryStream())
+                using (MemoryStream memoryStream = new System.IO.MemoryStream())
                 {
                     bitmap.Save(memoryStream, System.Drawing.Imaging.ImageFormat.Png);   // Guardar el bitmap en un flujo de memoria en formato PNG.  
                     var xImage = XImage.FromStream(memoryStream);                       // Crear un objeto XImage desde el flujo de memoria.
@@ -277,14 +315,15 @@ namespace TesseractOCR.Library.src
         /// <param name="gfx">El contexto gráfico donde se agregará la imagen al PDF.</param>
         /// <param name="imagePath">La ruta del archivo de imagen a agregar al PDF.</param>
         /// <param name="imageSize">El tamaño de la imagen a agregar en el formato XSize (ancho y alto).</param>
-        public static void AddImageToPdf(XGraphics gfx, string imagePath, XSize imageSize)
+        public static void AddImageToPdf(XGraphics gfx, Bitmap image, XSize imageSize)
         {
-            using (var bitmap = new Bitmap(imagePath))
-            {                
-                AdjustOrientation(bitmap);                                              // Ajustar la orientación de la imagen si es necesario.
-                var adjustedImage = ConvertBitmapToXImage(bitmap);                      // Convertir el bitmap ajustado a un objeto XImage.                
+            //using (var bitmap = new Bitmap(imagePath))
+            //using (var bitmap = LoadAndCorrectImageOrientation(imagePath))
+            //{
+                //AdjustOrientation(bitmap);                                              // Ajustar la orientación de la imagen si es necesario.
+                var adjustedImage = ConvertBitmapToXImage(image);                      // Convertir el bitmap ajustado a un objeto XImage.                
                 gfx.DrawImage(adjustedImage, 0, 0, imageSize.Width, imageSize.Height);  // Dibujar la imagen en el PDF.
-            }
+            //}
         }
 
         /// <summary>
