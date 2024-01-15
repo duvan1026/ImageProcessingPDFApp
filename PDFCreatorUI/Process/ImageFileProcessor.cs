@@ -176,6 +176,9 @@ namespace PDFCreatorUI.Process
                     reader.Close();
                 }
             }
+
+            WriteInformationToFile(targetPDF);
+
             pdf.Close();
             pdfDoc.Close();
         }

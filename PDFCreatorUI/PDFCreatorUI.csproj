@@ -7,7 +7,7 @@
     <ProjectGuid>{9E6091A6-ECE4-4D38-9154-3F52F9BB7335}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>PDFCreatorUI</RootNamespace>
-    <AssemblyName>PDFCreatorUI-NOPDF1.0.0.5</AssemblyName>
+    <AssemblyName>PDFCreatorUI1.0.0.6</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -15,7 +15,7 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <PublishUrl>C:\Users\duvan.castro\Desktop\TestPDFText\PDFCreatorUI-NOPDF1.0.0.5 - copia\</PublishUrl>
+    <PublishUrl>C:\DuvanCastro\Aplicaciones\PDFCreatorUI1.0.0.6\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
     <UpdateEnabled>false</UpdateEnabled>
@@ -25,8 +25,8 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>5</ApplicationRevision>
-    <ApplicationVersion>1.0.0.5</ApplicationVersion>
+    <ApplicationRevision>6</ApplicationRevision>
+    <ApplicationVersion>1.0.0.6</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
