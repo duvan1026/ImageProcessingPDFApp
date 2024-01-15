@@ -18,15 +18,17 @@ namespace PDFCreatorUI.Process
         const string outputFormat = ".pdf";
         const string delimiter = "-";
 
-        private string boxFolderName = null;            // Nombre de la carpeta primaria (Caja)
+        private string boxFolderName = null;             // Nombre de la carpeta primaria (Caja)
         private string bookFolderName = null;            // Nombre de la carpeta secundaria (Libro)
         private string expedienteFolderName = null;      // Nombre de la carpeta expediente (Expediente)
         private string imageFolderName = null;           // Nombre de la carpeta Imagen (Image)
 
-        private bool IsImageProcessing;                 // Check para procesar images por imagen
-        private bool IsLotProcessing;                   // Check para procesar imagen por lote
-        private int currentPageTiff;                    // Pagina actual de acuerdo al numero de Imagenes del expediente
-        private int pageNumberMaxTiff;                  // Numero de paginas totales que contiene el expediente
+        private string informationLogPath = null;        // ruta para almacenar el archivo de log
+
+        private bool IsImageProcessing;                  // Check para procesar images por imagen
+        private bool IsLotProcessing;                    // Check para procesar imagen por lote
+        private int currentPageTiff;                     // Pagina actual de acuerdo al numero de Imagenes del expediente
+        private int pageNumberMaxTiff;                   // Numero de paginas totales que contiene el expediente
 
         public string BoxFolderName
         {
@@ -50,6 +52,12 @@ namespace PDFCreatorUI.Process
         {
             get { return imageFolderName; }
             set { imageFolderName = value; }
+        }
+
+        public string InformationLogPath
+        {
+            get { return informationLogPath; }
+            set { informationLogPath = value; }
         }
 
         public bool ImageProcessState
@@ -94,8 +102,7 @@ namespace PDFCreatorUI.Process
         /// <param name="outputDocument">Documento PDF de salida.</param>
         /// <param name="tiffFile">Ruta del archivo TIFF de entrada.</param>
         /// <param name="destinationRoute">Ruta de destino para el archivo PDF resultante.</param>
-        /// <param name="outputInformationPath">Ruta para la información de salida.</param>
-        public void ProcessTiffImagesForPdfAssembly(PdfDocument outputDocument, string tiffFile, string destinationRoute, string outputInformationPath)
+        public void ProcessTiffImagesForPdfAssembly(PdfDocument outputDocument, string tiffFile, string destinationRoute)
         {
             try
             {
@@ -114,7 +121,7 @@ namespace PDFCreatorUI.Process
 
                     if (IsImageProcessing)
                     {
-                        WriteInformationToFile(outputPath, outputInformationPath);
+                        WriteInformationToFile(outputPath);
                     }
                     else
                     {
@@ -137,7 +144,7 @@ namespace PDFCreatorUI.Process
                         File.Delete(outputPath);
                     }
 
-                    WriteInformationToFileError(ex.Message, tiffFile, outputInformationPath);
+                    WriteInformationToFileError(ex.Message, tiffFile);
                 }
             }
             catch (Exception ex)
@@ -149,54 +156,66 @@ namespace PDFCreatorUI.Process
         /// <summary>
         /// Escribe el encabezado inicial del proceso en el archivo de información de salida especificado.
         /// </summary>
-        /// <param name="outputInformationPath">Ruta del archivo de información de salida.</param>
         /// <remarks>
         /// Este método agrega un encabezado con marca de tiempo que indica el inicio del proceso al archivo de información de salida.
         /// </remarks>
         /// <exception cref="ArgumentException">Se lanza si se produce un error al escribir en el archivo.</exception>
-        public void WriteInitialProcessBanner( string outputInformationPath)
+        public void WriteInitialProcessBanner()
         {
             try
             {
-                DateTime fechaLog = DateTime.Now;                                   // Obtener la fecha actual
-
-                using (StreamWriter sw = File.AppendText(outputInformationPath))
+                if (informationLogPath != null)
                 {
-                    sw.WriteLine("--------------------------------------------------------------");
-                    sw.WriteLine($"----- Inicio Proceso : {boxFolderName} - {fechaLog} -----");
-                    sw.WriteLine("--------------------------------------------------------------");
+                    DateTime fechaLog = GetCurrentDateTime();                                  // Obtener la fecha actual
+
+                    using (StreamWriter sw = File.AppendText(informationLogPath))
+                    {
+                        sw.WriteLine("--------------------------------------------------------------");
+                        sw.WriteLine($"----- Inicio Proceso : {boxFolderName} - {fechaLog} -----");
+                        sw.WriteLine("--------------------------------------------------------------");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException($"no se encontro o no existe la ruta para almacenar el archivo Log '{informationLogPath}'");
                 }
             }
             catch (Exception ex)
             {
-                throw new ArgumentException($"Error al escribir en el archivo '{outputInformationPath}': {ex.Message}");
+                throw new ArgumentException($"Error al escribir en el archivo '{informationLogPath}': {ex.Message}");
             }
         }
 
         /// <summary>
         /// Escribe el encabezado de finalización del proceso en el archivo de información de salida especificado.
         /// </summary>
-        /// <param name="outputInformationPath">Ruta del archivo de información de salida.</param>
         /// <remarks>
         /// Este método agrega un encabezado con marca de tiempo que indica el fin del proceso al archivo de información de salida.
         /// </remarks>
         /// <exception cref="ArgumentException">Se lanza si se produce un error al escribir en el archivo.</exception>
-        public void WriteFinalizationProcessBanner(string outputInformationPath)
+        public void WriteFinalizationProcessBanner()
         {
             try
             {
-                DateTime fechaLog = DateTime.Now; // Obtener la fecha actual
-
-                using (StreamWriter sw = new StreamWriter(outputInformationPath, true))
+                if (informationLogPath != null)
                 {
-                    sw.WriteLine("--------------------------------------------------------------");
-                    sw.WriteLine($"----- Fin Proceso : {boxFolderName} - {fechaLog} -----");
-                    sw.WriteLine("----******************************************************----");
+                    DateTime fechaLog = GetCurrentDateTime();                  // Obtener la fecha actual
+
+                    using (StreamWriter sw = new StreamWriter(informationLogPath, true))
+                    {
+                        sw.WriteLine("--------------------------------------------------------------");
+                        sw.WriteLine($"----- Fin Proceso : {boxFolderName} - {fechaLog} -----");
+                        sw.WriteLine("----******************************************************----");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException($"no se encontro o no existe la ruta para almacenar el archivo Log '{informationLogPath}'");
                 }
             }
             catch (Exception ex)
             {
-                throw new ArgumentException($"Error al escribir en el archivo '{outputInformationPath}': {ex.Message}");
+                throw new ArgumentException($"Error al escribir en el archivo '{informationLogPath}': {ex.Message}");
             }
         }
 
@@ -204,16 +223,29 @@ namespace PDFCreatorUI.Process
         /// Escribe información en un archivo de texto.
         /// </summary>
         /// <param name="inputFilePath">Ruta del archivo de entrada.</param>
-        /// <param name="outputInformationPath">Ruta del archivo de salida para la información.</param>
-        public void WriteInformationToFile(string inputFilePath, string outputInformationPath)
+        public void WriteInformationToFile(string inputFilePath)
         {
-            string imageName = Path.GetFileName(inputFilePath);                 // Obtener el nombre del archivo
-            DateTime fechaLog = DateTime.Now;                                   // Obtener la fecha actual
-            string tamañoFormateado = GetFormattedSize(inputFilePath);          // Obtiene el tamaño del archivo 
-
-            using (StreamWriter sw = File.AppendText(outputInformationPath))
+            try
             {
-                sw.WriteLine($"* {imageName}\t{fechaLog}\t{tamañoFormateado}");
+                if (informationLogPath != null)
+                {
+                    string imageName = Path.GetFileName(inputFilePath);                 // Obtener el nombre del archivo
+                    DateTime fechaLog = GetCurrentDateTime();                           // Obtener la fecha actual
+                    string tamañoFormateado = GetFormattedSize(inputFilePath);          // Obtiene el tamaño del archivo 
+
+                    using (StreamWriter sw = File.AppendText(informationLogPath))
+                    {
+                        sw.WriteLine($"* {imageName}\t{fechaLog}\t{tamañoFormateado}");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException($"No se encontro la ruta al archivo log o no existe :'{informationLogPath}'");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"Error al escribir en el archivo de Log en el metodo WriteInformationToFile() '{informationLogPath}': {ex.Message}");
             }
         }
 
@@ -222,16 +254,65 @@ namespace PDFCreatorUI.Process
         /// </summary>
         /// <param name="ex">String del mensaje de error</param>
         /// <param name="inputFilePath">Ruta del archivo de entrada.</param>
-        /// <param name="outputInformationPath">Ruta del archivo de salida para la información.</param>
-        public void WriteInformationToFileError(string ex, string inputFilePath, string outputInformationPath)
+        public void WriteInformationToFileError(string error, string inputFilePath)
         {
-            string imageName = Path.GetFileName(inputFilePath);                 // Obtener el nombre del archivo
-            DateTime fechaLog = DateTime.Now;                                   // Obtener la fecha actual
-
-            using (StreamWriter sw = File.AppendText(outputInformationPath))
+            try
             {
-                sw.WriteLine($"* {imageName}    {fechaLog}   -------ERROR :{ex}   --- en la ruta:{inputFilePath}");
+                if (informationLogPath != null)
+                {
+                    string imageName = Path.GetFileName(inputFilePath);                 // Obtener el nombre del archivo
+                    DateTime fechaLog = GetCurrentDateTime();                           // Obtener la fecha actual
+
+                    using (StreamWriter sw = File.AppendText(informationLogPath))
+                    {
+                        sw.WriteLine($"* {imageName}    {fechaLog}   -------ERROR :{error}   --- en la ruta:{inputFilePath}");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException($"No se encontro la ruta al archivo log o no existe :'{informationLogPath}'");
+                }
             }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"Error al escribir en el archivo de Log en el metodo WriteInformationToFileError(). Ruta: '{informationLogPath}': {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Escribe un mensaje de error relacionado con la operación de cambio de nombre de carpeta en el archivo de registro.
+        /// </summary>
+        /// <param name="error">Mensaje de error detallado.</param>
+        /// <param name="inputFilePath">Ruta de la carpeta o archivo afectado por el error.</param>
+        public void WriteRenameFolderErrorToLog(string error, string inputFilePath)
+        {
+            try
+            {
+                if (informationLogPath != null)
+                {
+                    using (StreamWriter sw = File.AppendText(informationLogPath))
+                    {
+                        sw.WriteLine($"* ***ERROR*** :{error}  --- en la ruta:{inputFilePath}");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException($"No se encontro la ruta al archivo log o no existe :'{informationLogPath}'");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"Error al escribir en el archivo de Log en el metodo WriteRenameFolderErrorToLog(). Ruta: '{informationLogPath}': {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Obtiene la fecha y hora actuales de manera segura y confiable.
+        /// </summary>
+        /// <returns>Un objeto DateTime que representa la fecha y hora actuales.</returns>
+        private DateTime GetCurrentDateTime()
+        {
+            return DateTime.Now;
         }
 
         /// <summary>

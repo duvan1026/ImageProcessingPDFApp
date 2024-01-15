@@ -21,6 +21,8 @@ namespace PDFCreatorUI
 
         private static string nameFolderDestination = null;     // Nombre carpeta de destino
 
+        static ImageFileProcessor imageFileProcess = new ImageFileProcessor();
+
         [STAThread]
         static void Main()
         {
@@ -72,14 +74,13 @@ namespace PDFCreatorUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ocurrió un error: {ex.ToString()}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Ocurrió un error {ex.Message} : {ex.ToString()}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
 
         static void ProcesarImagenes(IProgress<ProgressData> progress, FormCarguePaquete formCarguePaquete, FormProgress progressForm)
         {
-            ImageFileProcessor imageFileProcess = new ImageFileProcessor();
 
             try
             {
@@ -108,7 +109,8 @@ namespace PDFCreatorUI
                     string outputFileDestination = Path.Combine(outputFile, imageFileProcess.BoxFolderName);
                     imageFileProcess.CreateDirectoryWithWriteAccess(outputFileDestination);
 
-                    string outputInformationPath = imageFileProcess.GetTXTOutputPath(outputFileDestination);
+                    //string outputInformationPath = imageFileProcess.GetTXTOutputPath(outputFileDestination);
+                    imageFileProcess.InformationLogPath = imageFileProcess.GetTXTOutputPath(outputFileDestination);
 
 
                     // Filtrar y recorrer los Book solo que cumplen con las condiciónes
@@ -119,7 +121,7 @@ namespace PDFCreatorUI
 
                         imageFileProcess.BookFolderName = Path.GetFileName(currentBookFolder.FullName);       // Nombre del libro
                         string bookFolderPath = Path.Combine(inputFile, imageFileProcess.BookFolderName);
-                        imageFileProcess.WriteInitialProcessBanner(outputInformationPath);                    
+                        imageFileProcess.WriteInitialProcessBanner();                    
 
                         int expedienteProgressLevel = 0;
 
@@ -163,7 +165,7 @@ namespace PDFCreatorUI
                                         {
                                             if (!progressForm.Cancelar_)
                                             {
-                                                Task.Run(() => imageFileProcess.ProcessTiffImagesForPdfAssembly(outputDocument, tiffFile, outputFileDestination, outputInformationPath)).Wait();
+                                                Task.Run(() => imageFileProcess.ProcessTiffImagesForPdfAssembly(outputDocument, tiffFile, outputFileDestination)).Wait();
                                                imageFileProcess.CurrentPageTiff += 1;
                                             }
                                             else 
@@ -177,13 +179,12 @@ namespace PDFCreatorUI
 
                                             try
                                             {
-                                                imageFileProcess.WriteInformationToFile(outputnamePDFTotal, outputInformationPath);
+                                                imageFileProcess.WriteInformationToFile(outputnamePDFTotal);
 
                                             }
                                             catch (Exception ex)
                                             {
-                                                imageFileProcess.WriteInformationToFileError(ex.Message, outputnamePDFTotal,outputInformationPath);
-
+                                                imageFileProcess.WriteInformationToFileError(ex.Message, outputnamePDFTotal);
                                             }
                                         }
                                     }
@@ -225,7 +226,7 @@ namespace PDFCreatorUI
 
                     }
 
-                    imageFileProcess.WriteFinalizationProcessBanner(outputInformationPath);
+                    imageFileProcess.WriteFinalizationProcessBanner();
                     MessageBox.Show($"Proceso completado. Todas las imágenes han sido procesadas del directorio '{imageFileProcess.BoxFolderName}'.", "Proceso Completo", 
                                     MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -325,18 +326,74 @@ namespace PDFCreatorUI
             catch (System.IO.IOException ex)
             {                
                 if (IsFolderInUse(ex))                                    // Verificar si la excepción es debido a que la carpeta está en uso por otro proceso
-                {
-                    throw new ArgumentException($"La carpeta '{oldFolderPath}' está siendo utilizada por otro proceso.");
+                {                    
+                    if (ReleaseFolder(oldFolderPath))                   // La carpeta está en uso, intentar liberarla
+                    {
+                        System.IO.Directory.Move(oldFolderPath, newFolderPath);
+                    }
+                    else
+                    {
+                        imageFileProcess.WriteRenameFolderErrorToLog("Error al cambiar el nombre de la carpeta,está siendo utilizada por otro proceso y no se pudo liberar ", oldFolderPath);
+                    }
                 }
                 else
                 {
-                    throw new Exception($"Error al cambiar el nombre de la carpeta '{oldFolderPath}': {ex.Message}");
+                    imageFileProcess.WriteRenameFolderErrorToLog("Error al cambiar el nombre de la carpeta,está siendo utilizada por otro proceso y no se pudo liberar ", oldFolderPath);
                 }
             }
             catch (UnauthorizedAccessException ex)
             {
-                throw new ArgumentException($"Error de acceso no autorizado al cambiar el nombre de la carpeta '{oldFolderPath}': {ex.Message}");
+                imageFileProcess.WriteRenameFolderErrorToLog($"Error de acceso no autorizado al cambiar el nombre de la carpeta, '{ex.Message}' ", oldFolderPath);
             }
+        }
+
+        static bool ReleaseFolder(string folderPath)
+        {
+            try
+            {
+                // Intentar encontrar el proceso que está utilizando la carpeta
+                var processUsingFolder = GetProcessUsingFolder(folderPath);
+
+                // Si se encuentra el proceso, cerrarlo
+                if (processUsingFolder != null)
+                {
+                    processUsingFolder.Kill();
+                    processUsingFolder.WaitForExit();
+                    return true;
+                }
+
+                return false; // No se encontró un proceso utilizando la carpeta
+            }
+            catch (Exception)
+            {
+                return false; // Error al intentar liberar la carpeta
+            }
+        }
+
+        static System.Diagnostics.Process GetProcessUsingFolder(string folderPath)
+        {
+            // Obtener todos los procesos que están utilizando la carpeta
+            var processes = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(folderPath));
+            foreach (var process in processes)
+            {
+                try
+                {
+                    // Obtener la ruta del archivo ejecutable del proceso
+                    string processExecutablePath = process.MainModule.FileName;
+
+                    // Comparar si la carpeta está en la ruta del archivo ejecutable del proceso
+                    if (folderPath.Equals(Path.GetDirectoryName(processExecutablePath), StringComparison.OrdinalIgnoreCase))
+                    {
+                        return process; // Devolver el proceso que está utilizando la carpeta
+                    }
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+            }
+
+            return null; // No se encontró un proceso utilizando la carpeta
         }
 
 
