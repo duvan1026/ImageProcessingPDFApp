@@ -42,6 +42,7 @@
             this.checkProcessImage = new System.Windows.Forms.CheckBox();
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.checkUnificarPDF = new System.Windows.Forms.CheckBox();
             this.RutaGroupBox.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -111,6 +112,7 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.checkUnificarPDF);
             this.groupBox2.Controls.Add(this.checkProcessLote);
             this.groupBox2.Controls.Add(this.checkProcessImage);
             this.groupBox2.Controls.Add(this.button2);
@@ -119,7 +121,7 @@
             this.groupBox2.Controls.Add(this.RutaGroupBox);
             this.groupBox2.Location = new System.Drawing.Point(12, 12);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(473, 253);
+            this.groupBox2.Size = new System.Drawing.Size(473, 275);
             this.groupBox2.TabIndex = 5;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Rutas";
@@ -148,7 +150,7 @@
             // 
             this.button2.Image = global::PDFCreatorUI.Properties.Resources.cancel;
             this.button2.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button2.Location = new System.Drawing.Point(377, 218);
+            this.button2.Location = new System.Drawing.Point(377, 239);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(75, 23);
             this.button2.TabIndex = 6;
@@ -161,7 +163,7 @@
             // 
             this.button1.Image = global::PDFCreatorUI.Properties.Resources.Aceptar;
             this.button1.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button1.Location = new System.Drawing.Point(270, 218);
+            this.button1.Location = new System.Drawing.Point(271, 239);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 5;
@@ -170,11 +172,21 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // checkUnificarPDF
+            // 
+            this.checkUnificarPDF.AutoSize = true;
+            this.checkUnificarPDF.Location = new System.Drawing.Point(15, 245);
+            this.checkUnificarPDF.Name = "checkUnificarPDF";
+            this.checkUnificarPDF.Size = new System.Drawing.Size(86, 17);
+            this.checkUnificarPDF.TabIndex = 10;
+            this.checkUnificarPDF.Text = "Unificar PDF";
+            this.checkUnificarPDF.UseVisualStyleBackColor = true;
+            // 
             // FormCarguePaquete
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(499, 274);
+            this.ClientSize = new System.Drawing.Size(499, 294);
             this.Controls.Add(this.groupBox2);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "FormCarguePaquete";
@@ -204,5 +216,6 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.CheckBox checkProcessLote;
         private System.Windows.Forms.CheckBox checkProcessImage;
+        private System.Windows.Forms.CheckBox checkUnificarPDF;
     }
 }
