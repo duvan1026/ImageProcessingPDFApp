@@ -7,6 +7,15 @@ using PdfSharp.Pdf;
 using PdfSharp.Pdf.IO;
 using TesseractOCR.Library.src;
 using System.Threading.Tasks;
+using PdfSharp;
+using System.Xml.Linq;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using iTextSharp.text.pdf.parser;
+using PdfDocument = PdfSharp.Pdf.PdfDocument;
+using PageSize = iTextSharp.text.PageSize;
+using Path = System.IO.Path;
+using PdfReader = PdfSharp.Pdf.IO.PdfReader;
 
 namespace PDFCreatorUI.Process
 {
@@ -95,6 +104,81 @@ namespace PDFCreatorUI.Process
 
 
         #region Metodos
+
+
+        /// <summary>
+        /// Procesa archivos pdf en un directorio de entrada y los convierte en un documento PDF de destino.
+        /// </summary>
+        /// <param name="directoryInput">El directorio de entrada que contiene archivos pdf a procesar.</param>
+        /// <param name="destinationRoute">El directorio de destino donde se almacenará el documento PDF resultante.</param>
+        public async Task ProcessPDFFiles(string directoryInput, string destinationRoute)
+        {
+            // Obtener archivos TIFF en el directorio actual
+            string[] pdfFiles = Directory.GetFiles(directoryInput, "*.pdf")
+                        .OrderBy(fileName => fileName)
+                        .ToArray();
+
+            if (pdfFiles == null || pdfFiles.Length == 0) return;
+
+            string outputInformationPath = GetTXTOutputPath(destinationRoute);
+            string outputnamePDFTotal = GetOutputPdfName(destinationRoute);
+
+            await Task.Run(() =>
+            {
+                CreateMergedPDF(outputnamePDFTotal, directoryInput);
+            });
+        }
+
+        /// <summary>
+        /// Une dos PDF uno detras del otro dependiendo de como los va encontrando
+        /// </summary>
+        /// <param name="targetPDF">La ruta completa del archivo .PDF que se va a crear</param>
+        /// <param name="sourceDir">La ruta del folder que contiene los .PDF a unir</param>
+        public void CreateMergedPDF(string targetPDF, string sourceDir)
+        {
+            FileStream stream = new FileStream(targetPDF, FileMode.Create);
+
+            Document pdfDoc = new Document(PageSize.A4);
+            PdfCopy pdf = new PdfCopy(pdfDoc, stream);
+            pdfDoc.Open();
+
+            string[] files = Directory.GetFiles(sourceDir, "*.pdf")
+                    .OrderBy(fileName => fileName)
+                    .ToArray();
+            foreach (string file in files)
+            {
+                if (file.Split('.').Last().ToUpper() == "PDF")
+                {
+                    iTextSharp.text.pdf.PdfReader reader = new iTextSharp.text.pdf.PdfReader(file);
+
+                    int rotation = reader.GetPageRotation(1);
+
+                    if (rotation == 0)
+                    {
+                        ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
+                        string currentPageText = PdfTextExtractor.GetTextFromPage(reader, 1, strategy);
+                    }
+                    else
+                    {
+                        ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
+                        string currentPageText = PdfTextExtractor.GetTextFromPage(reader, 1, strategy);
+                    }
+
+
+
+
+                    reader.ConsolidateNamedDestinations();
+                    for (int i = 1; i <= reader.NumberOfPages; i++)
+                    {
+                        PdfImportedPage page = pdf.GetImportedPage(reader, i);
+                        pdf.AddPage(page);
+                    }
+                    reader.Close();
+                }
+            }
+            pdf.Close();
+            pdfDoc.Close();
+        }
 
         /// <summary>
         /// Procesa imágenes TIFF para ensamblar un documento PDF.

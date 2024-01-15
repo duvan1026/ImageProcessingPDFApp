@@ -41,6 +41,18 @@ namespace PDFCreatorUI.Forms
         public bool checkProcessImageState { get; private set; }
         public bool checkProcessLoteState { get; private set; }
 
+        public bool SelectedSaveUnificarPDF
+        {
+            get
+            {
+                return checkUnificarPDF.Checked;
+            }
+            set
+            {
+                checkUnificarPDF.Checked = value;
+            }
+        }
+
 
         #endregion
 
@@ -132,7 +144,7 @@ namespace PDFCreatorUI.Forms
                 return false;
             }
 
-            if (!checkProcessImage.Checked && !checkProcessLote.Checked)
+            if (!checkProcessImage.Checked && !checkProcessLote.Checked && !checkUnificarPDF.Checked)
             {
                 MessageBox.Show("Debe seleccionar una opción de procesamiento válida ", "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 checkProcessImage.Focus();

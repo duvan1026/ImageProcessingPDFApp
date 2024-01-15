@@ -86,6 +86,7 @@ namespace PDFCreatorUI
             {
                 string inputFile = formCarguePaquete.SelectedSourcePath.TrimEnd('\\');
                 string outputFile = formCarguePaquete.SelectedSavePath.TrimEnd('\\');
+                bool unificarpdf = formCarguePaquete.SelectedSaveUnificarPDF;
 
                 imageFileProcess.ImageProcessState = formCarguePaquete.checkProcessImageState;
                 imageFileProcess.LoteProcessState = formCarguePaquete.checkProcessLoteState;
@@ -148,57 +149,61 @@ namespace PDFCreatorUI
 
                                 imageFileProcess.ExpedienteFolderName = Path.GetFileName(currentExpedienteFolder.FullName);  // Nombre del expediente 
 
-                                // Obtener archivos TIFF en el directorio actual
-                                string[] tiffFiles = imageFileProcess.GetTiffFilesInDirectory(currentExpedienteFolder.FullName)
-                                            .OrderBy(fileName => fileName)
-                                            .ToArray();
-
-                                if ( tiffFiles.Length != 0)
+                                if (unificarpdf)
                                 {
-                                    imageFileProcess.PageNumberMaxTiff = tiffFiles.Length;
-                                    imageFileProcess.CurrentPageTiff = 0;
+                                    Task.Run(() => imageFileProcess.ProcessPDFFiles(currentExpedienteFolder.FullName, outputFileDestination)).Wait();
+                                }
+                                else
+                                {
+                                    // Obtener archivos TIFF en el directorio actual
+                                    string[] tiffFiles = imageFileProcess.GetTiffFilesInDirectory(currentExpedienteFolder.FullName)
+                                                .OrderBy(fileName => fileName)
+                                                .ToArray();
 
-                                    using (PdfDocument outputDocument = imageFileProcess.CreatePdfDocument())
+                                    if (tiffFiles.Length != 0)
                                     {
+                                        imageFileProcess.PageNumberMaxTiff = tiffFiles.Length;
+                                        imageFileProcess.CurrentPageTiff = 0;
 
-                                        foreach (string tiffFile in tiffFiles)
+                                        using (PdfDocument outputDocument = imageFileProcess.CreatePdfDocument())
                                         {
-                                            if (!progressForm.Cancelar_)
-                                            {
-                                                Task.Run(() => imageFileProcess.ProcessTiffImagesForPdfAssembly(outputDocument, tiffFile, outputFileDestination)).Wait();
-                                               imageFileProcess.CurrentPageTiff += 1;
-                                            }
-                                            else 
-                                            {
-                                                CheckForCancellation(progressForm);
-                                            }
-                                        }
-                                        if (imageFileProcess.LoteProcessState)
-                                        {
-                                            string outputnamePDFTotal = imageFileProcess.GetOutputPdfName(outputFileDestination);
 
-                                            try
+                                            foreach (string tiffFile in tiffFiles)
                                             {
-                                                imageFileProcess.WriteInformationToFile(outputnamePDFTotal);
-
+                                                if (!progressForm.Cancelar_)
+                                                {
+                                                    Task.Run(() => imageFileProcess.ProcessTiffImagesForPdfAssembly(outputDocument, tiffFile, outputFileDestination)).Wait();
+                                                    imageFileProcess.CurrentPageTiff += 1;
+                                                }
+                                                else
+                                                {
+                                                    CheckForCancellation(progressForm);
+                                                }
                                             }
-                                            catch (Exception ex)
+                                            if (imageFileProcess.LoteProcessState)
                                             {
-                                                imageFileProcess.WriteInformationToFileError(ex.Message, outputnamePDFTotal);
+                                                string outputnamePDFTotal = imageFileProcess.GetOutputPdfName(outputFileDestination);
+
+                                                try
+                                                {
+                                                    imageFileProcess.WriteInformationToFile(outputnamePDFTotal);
+
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    imageFileProcess.WriteInformationToFileError(ex.Message, outputnamePDFTotal);
+                                                }
                                             }
                                         }
                                     }
-                                }
-       
-                                else
-                                {
-                                    MessageBox.Show($"ADVERTENCIA: No se encontraron Imagenes en el libro '{imageFileProcess.ExpedienteFolderName}' para el procesamiento de imágenes. " +
-                                        $"Por favor, verifique la ruta de entrada. El proceso continuará, pero los resultados pueden no ser precisos.",
-                                        "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    else
+                                    {
+                                        MessageBox.Show($"ADVERTENCIA: No se encontraron Imagenes en el libro '{imageFileProcess.ExpedienteFolderName}' para el procesamiento de imágenes. " +
+                                            $"Por favor, verifique la ruta de entrada. El proceso continuará, pero los resultados pueden no ser precisos.",
+                                            "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
+                                    }
                                 }
-                                    //imageFileProcess.ProcessTiffFiles(currentExpedienteFolder.FullName, outputFileDestination);
-                                    //Task.Run(() => imageFileProcess.ProcessTiffFiles(currentExpedienteFolder.FullName, outputFileDestination)).Wait();
 
                                 // Cambio de Nombre de La Carpeta (libro)
                                 string expedienteFolderPath = Path.Combine(bookFolderPath, imageFileProcess.ExpedienteFolderName);
